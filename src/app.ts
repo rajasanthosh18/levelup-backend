@@ -15,7 +15,7 @@ app.use("/api/auth", authRoutes);
 declare module "express-serve-static-core" {
   interface Request {
     user?: {
-      id: string;
+      id: string | number;
       email: string;
       iat?: number;
       exp?: number;

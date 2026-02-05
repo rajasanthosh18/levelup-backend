@@ -1,17 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { AuthService } from "../features/auth/auth.service";
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-  };
-}
-
 const authService = new AuthService();
 
 export const authenticateToken = (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
@@ -27,6 +20,9 @@ export const authenticateToken = (
     return res.status(403).json({ error: "Invalid or expired token" });
   }
 
-  req.user = decoded;
+  req.user = {
+    id: decoded.id,
+    email: decoded.email,
+  };
   next();
 };

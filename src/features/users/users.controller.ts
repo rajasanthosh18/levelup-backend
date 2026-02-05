@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { logger } from "../../common/logger";
-import { AuthenticatedRequest } from "../../middleware/authMiddleware";
 import { UsersService } from "./users.service";
 
 const usersService = new UsersService();
@@ -56,7 +55,7 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
+export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = Array.isArray(id) ? id[0] : id;
@@ -94,7 +93,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = Array.isArray(id) ? id[0] : id;
