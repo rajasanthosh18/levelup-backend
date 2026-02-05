@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import { logger } from "../../common/logger";
+import { AuthenticatedRequest } from "../../middleware/authMiddleware";
 import { UsersService } from "./users.service";
 
 const usersService = new UsersService();
@@ -33,8 +35,13 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const { email, name } = req.body;
-    const user = await usersService.createUser({ email, name });
+    const { email, name, password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: "Password is required" });
+    }
+
+    const user = await usersService.createUser({ email, name, password });
     res.status(201).json(user);
   } catch (error) {
     if (error instanceof Error) {
@@ -49,16 +56,26 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = Array.isArray(id) ? id[0] : id;
     const { email, name } = req.body;
 
+    logger.info(
+      { userId: req.user?.id, targetUserId: userId, email },
+      "User controller: Update user request",
+    );
+
     const user = await usersService.updateUser(parseInt(userId), {
       email,
       name,
     });
+
+    logger.info(
+      { userId: req.user?.id, targetUserId: userId },
+      "User controller: User updated successfully",
+    );
     res.json(user);
   } catch (error) {
     if (error instanceof Error) {
@@ -77,11 +94,22 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = Array.isArray(id) ? id[0] : id;
+
+    logger.info(
+      { userId: req.user?.id, targetUserId: userId },
+      "User controller: Delete user request",
+    );
+
     await usersService.deleteUser(parseInt(userId));
+
+    logger.info(
+      { userId: req.user?.id, deletedUserId: userId },
+      "User controller: User deleted successfully",
+    );
     res.json({ message: "User deleted successfully" });
   } catch (error) {
     if (error instanceof Error) {
