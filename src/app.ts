@@ -19,6 +19,8 @@ app.use(
       "http://localhost:3000",
       "https://levelup-frontend-eight.vercel.app/",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );
