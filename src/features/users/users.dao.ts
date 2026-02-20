@@ -3,23 +3,21 @@ import { db } from "../../db/neonDB";
 import { users } from "../../db/schema";
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   name: string | null;
-  password: string;
   createdAt: Date | null;
 }
 
 export interface CreateUserData {
+  id: string;
   email: string;
   name?: string;
-  password: string;
 }
 
 export interface UpdateUserData {
   email?: string;
   name?: string;
-  password?: string;
 }
 
 export class UsersDAO {
@@ -27,7 +25,7 @@ export class UsersDAO {
     return await db.select().from(users);
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     const result = await db.select().from(users).where(eq(users.id, id));
     return result.length > 0 ? result[0] : null;
   }
@@ -42,7 +40,7 @@ export class UsersDAO {
     return result[0];
   }
 
-  async update(id: number, data: UpdateUserData): Promise<User | null> {
+  async update(id: string, data: UpdateUserData): Promise<User | null> {
     const result = await db
       .update(users)
       .set(data)
@@ -51,7 +49,7 @@ export class UsersDAO {
     return result.length > 0 ? result[0] : null;
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id)).returning();
     return result.length > 0;
   }

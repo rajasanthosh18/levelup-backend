@@ -17,7 +17,7 @@ export const getUserById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = Array.isArray(id) ? id[0] : id;
-    const user = await usersService.getUserById(parseInt(userId));
+    const user = await usersService.getUserById(userId ?? "");
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -34,13 +34,13 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const { email, name, password } = req.body;
+    const { email, name } = req.body;
 
-    if (!password) {
-      return res.status(400).json({ error: "Password is required" });
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
     }
 
-    const user = await usersService.createUser({ email, name, password });
+    const user = await usersService.createUser({ email, name });
     res.status(201).json(user);
   } catch (error) {
     if (error instanceof Error) {
@@ -66,7 +66,7 @@ export const updateUser = async (req: Request, res: Response) => {
       "User controller: Update user request",
     );
 
-    const user = await usersService.updateUser(parseInt(userId), {
+    const user = await usersService.updateUser(userId ?? "", {
       email,
       name,
     });
@@ -103,7 +103,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       "User controller: Delete user request",
     );
 
-    await usersService.deleteUser(parseInt(userId));
+    await usersService.deleteUser(userId ?? "");
 
     logger.info(
       { userId: req.user?.id, deletedUserId: userId },

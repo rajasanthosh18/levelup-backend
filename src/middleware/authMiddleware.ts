@@ -1,21 +1,20 @@
 import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import { logger } from "../common/logger";
+import { AuthService } from "../features/auth/auth.service";
+
+const authService = new AuthService();
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    iat?: number;
-    exp?: number;
   };
 }
 
 /**
- * Core JWT verification middleware
- * Use this directly when you need to enforce authentication on specific routes
+ * Core token verification middleware using Supabase
  */
-export const requireAuth = (
+export const requireAuth = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -32,17 +31,24 @@ export const requireAuth = (
       return res.status(401).json({ error: "No authorization token provided" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const user = await authService.verifyToken(token);
+
+    if (!user) {
+      logger.error(
+        { ip: req.ip, path: req.path },
+        "Auth middleware: Token verification failed",
+      );
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      iat: decoded.iat,
-      exp: decoded.exp,
+      id: user.id,
+      email: user.email,
     };
 
     logger.info(
-      { userId: decoded.id, email: decoded.email, path: req.path },
-      "Auth middleware: Token verified",
+      { userId: user.id, email: user.email, path: req.path },
+      "Auth middleware: Token verified via Supabase",
     );
 
     next();
@@ -53,15 +59,8 @@ export const requireAuth = (
         ip: req.ip,
         path: req.path,
       },
-      "Auth middleware: Token verification failed",
+      "Auth middleware: Unexpected error during verification",
     );
-
-    if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ error: "Token expired" });
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
 
     res.status(401).json({ error: "Unauthorized" });
   }
@@ -69,24 +68,21 @@ export const requireAuth = (
 
 /**
  * Common application middleware that conditionally applies authentication
+ * - If request path starts with /api/auth, skip auth (login/verify routes)
  * - If request path starts with /api, authentication is required
  * - Otherwise, authentication is skipped
- *
- * This middleware should be applied globally in app.ts
- * Usage in app.ts: app.use(commonAuthMiddleware);
  */
 export const commonAuthMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  // Check if the request path starts with /api
+  if (req.path.startsWith("/api/auth")) {
+    return next();
+  }
   if (req.path.startsWith("/api")) {
-    // Apply authentication for /api routes
     return requireAuth(req, res, next);
   }
-
-  // Skip authentication for non-/api routes
   logger.debug({ path: req.path }, "Skipping auth for non-API route");
   next();
 };

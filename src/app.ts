@@ -31,7 +31,7 @@ app.use("/api/waitlist", waitlistRoutes);
 declare module "express-serve-static-core" {
   interface Request {
     user?: {
-      id: string | number;
+      id: string;
       email: string;
       iat?: number;
       exp?: number;

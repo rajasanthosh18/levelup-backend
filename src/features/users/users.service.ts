@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { CreateUserData, UpdateUserData, User, UsersDAO } from "./users.dao";
 
 export class UsersService {
@@ -11,30 +12,33 @@ export class UsersService {
     return await this.usersDAO.findAll();
   }
 
-  async getUserById(id: number): Promise<User | null> {
-    if (!id || id <= 0) {
+  async getUserById(id: string): Promise<User | null> {
+    if (!id) {
       throw new Error("Invalid user ID");
     }
     return await this.usersDAO.findById(id);
   }
 
-  async createUser(userData: CreateUserData): Promise<User> {
-    // Business logic validation
+  async createUser(userData: { email: string; name?: string }): Promise<User> {
     if (!userData.email || !userData.email.includes("@")) {
       throw new Error("Valid email is required");
     }
 
-    // Check if user already exists
     const existingUser = await this.usersDAO.findByEmail(userData.email);
     if (existingUser) {
       throw new Error("User with this email already exists");
     }
 
-    return await this.usersDAO.create(userData);
+    const data: CreateUserData = {
+      id: randomUUID(),
+      email: userData.email,
+      name: userData.name,
+    };
+    return await this.usersDAO.create(data);
   }
 
-  async updateUser(id: number, userData: UpdateUserData): Promise<User> {
-    if (!id || id <= 0) {
+  async updateUser(id: string, userData: UpdateUserData): Promise<User> {
+    if (!id) {
       throw new Error("Invalid user ID");
     }
 
@@ -42,7 +46,6 @@ export class UsersService {
       throw new Error("Valid email is required");
     }
 
-    // Check if email is already taken by another user
     if (userData.email) {
       const existingUser = await this.usersDAO.findByEmail(userData.email);
       if (existingUser && existingUser.id !== id) {
@@ -58,8 +61,8 @@ export class UsersService {
     return updatedUser;
   }
 
-  async deleteUser(id: number): Promise<void> {
-    if (!id || id <= 0) {
+  async deleteUser(id: string): Promise<void> {
+    if (!id) {
       throw new Error("Invalid user ID");
     }
 

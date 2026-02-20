@@ -3,64 +3,20 @@ import { AuthService } from "./auth.service";
 
 const authService = new AuthService();
 
-export const signup = async (req: Request, res: Response) => {
-  try {
-    const { email, name, password, confirmPassword } = req.body;
+export const verify = async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
 
-    if (password !== confirmPassword) {
-      return res.status(400).json({ error: "Passwords do not match" });
-    }
-
-    const result = await authService.signup({
-      email,
-      name,
-      password,
-    });
-
-    res.status(201).json({
-      message: "User registered successfully",
-      user: result.user,
-      token: result.token,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (
-        error.message.includes("Valid email") ||
-        error.message.includes("already exists") ||
-        error.message.includes("password")
-      ) {
-        return res.status(400).json({ error: error.message });
-      }
-    }
-    res.status(500).json({ error: "Failed to register user" });
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
   }
-};
 
-export const login = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
-    const result = await authService.login(email, password);
-
-    if (!result) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    res.json({
-      message: "Login successful",
-      user: result.user,
-      token: result.token,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "Invalid email or password") {
-        return res.status(401).json({ error: error.message });
-      }
-    }
-    res.status(500).json({ error: "Login failed" });
+  const user = await authService.verifyToken(token);
+  if (!user) {
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
+
+  res.json({
+    user: { id: user.id, email: user.email, name: user.name },
+  });
 };
