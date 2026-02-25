@@ -17,6 +17,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "https://levelup-frontend-pygib6v3h-rajasanthosh18s-projects.vercel.app",
       "https://levelup-frontend-eight.vercel.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
